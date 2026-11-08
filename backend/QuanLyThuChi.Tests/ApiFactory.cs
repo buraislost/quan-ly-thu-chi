@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -27,6 +28,10 @@ public class ApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Jwt:Khoa"] = "khoa-chi-dung-cho-test-khong-dung-that-0123456789",
+        }));
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IDongHo>();
@@ -36,6 +41,9 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<AppDbContext>();
             services.AddDbContext<AppDbContext>(o => o.UseSqlite(_ketNoi));
+
+            // Nạp controller của project test (route /api/_test/dto) để kiểm tra lỗi ModelState.
+            services.AddControllers().AddApplicationPart(typeof(ApiFactory).Assembly);
 
             // Hook cho các task sau:
             // - Task 13: thay IDichVuOCR bằng FakeDichVuOCR.
