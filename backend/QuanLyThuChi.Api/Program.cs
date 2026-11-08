@@ -81,6 +81,7 @@ builder.Services.AddScoped<QuanLyThuChi.Services.NganSachService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.GiaoDichService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.MucTieuService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.BaoCaoService>();
+builder.Services.AddScoped<QuanLyThuChi.Services.QuanTriService>();
 // Bộ hẹn giờ: luôn đăng ký singleton để test gọi trực tiếp; chỉ chạy nền ngoài môi trường Testing.
 builder.Services.AddSingleton<QuanLyThuChi.Jobs.NhacNhoHangNgayJob>();
 builder.Services.AddSingleton<QuanLyThuChi.Jobs.TongKetThangJob>();

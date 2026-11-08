@@ -98,7 +98,8 @@ public class DanhMucService(AppDbContext db)
     }
 
     // So sánh trong bộ nhớ để không phụ thuộc collation của CSDL.
-    private async Task KiemTraTrungTenAsync(int maTk, string ten, LoaiGiaoDich loai, int? boQuaMa, CancellationToken ct)
+    // maTk null: kiểm tra trong phạm vi danh mục mặc định (dùng cho quản trị viên).
+    internal async Task KiemTraTrungTenAsync(int? maTk, string ten, LoaiGiaoDich loai, int? boQuaMa, CancellationToken ct)
     {
         var cacTen = await db.DanhMuc.AsNoTracking()
             .Where(d => (d.MaTaiKhoan == null || d.MaTaiKhoan == maTk) && d.Loai == loai && d.MaDanhMuc != boQuaMa)
