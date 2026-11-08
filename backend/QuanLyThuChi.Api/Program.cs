@@ -81,6 +81,14 @@ builder.Services.AddScoped<QuanLyThuChi.Services.NganSachService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.GiaoDichService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.MucTieuService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.BaoCaoService>();
+// Bộ hẹn giờ: luôn đăng ký singleton để test gọi trực tiếp; chỉ chạy nền ngoài môi trường Testing.
+builder.Services.AddSingleton<QuanLyThuChi.Jobs.NhacNhoHangNgayJob>();
+builder.Services.AddSingleton<QuanLyThuChi.Jobs.TongKetThangJob>();
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<QuanLyThuChi.Jobs.NhacNhoHangNgayJob>());
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<QuanLyThuChi.Jobs.TongKetThangJob>());
+}
 builder.Services.AddOptions<GeminiOptions>().Bind(builder.Configuration.GetSection(GeminiOptions.TenMuc));
 builder.Services.AddOptions<LuuTepOptions>().Bind(builder.Configuration.GetSection(LuuTepOptions.TenMuc));
 builder.Services.AddScoped<LuuTepService>();
