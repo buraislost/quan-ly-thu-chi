@@ -11,36 +11,13 @@ namespace QuanLyThuChi.Jobs;
 /// nhắc ghi chép nếu hôm nay chưa có giao dịch và nhắc các mục tiêu tiết kiệm đang chậm tiến độ.
 /// </summary>
 public class NhacNhoHangNgayJob(IServiceScopeFactory scopeFactory, IDongHo dongHo, ILogger<NhacNhoHangNgayJob> logger)
-    : BackgroundService
+    : BoHenGioMotPhut(logger, "nhắc nhở hằng ngày")
 {
     public const string NoiDungNhacGhiChep = "Hôm nay bạn chưa ghi chép chi tiêu nào. Dành 1 phút ghi lại nhé!";
     private static readonly CultureInfo ViVN = CultureInfo.GetCultureInfo("vi-VN");
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
-        try
-        {
-            do
-            {
-                try
-                {
-                    await ChayMotLanAsync(stoppingToken);
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    logger.LogError(ex, "Vòng nhắc nhở hằng ngày bị lỗi, sẽ thử lại ở vòng sau");
-                }
-            } while (await timer.WaitForNextTickAsync(stoppingToken));
-        }
-        catch (OperationCanceledException)
-        {
-            // Dừng ứng dụng.
-        }
-    }
-
-    /// <summary>Một vòng xử lý; lỗi được ném ra cho người gọi (vòng lặp nền ghi log rồi chạy tiếp).</summary>
-    public async Task ChayMotLanAsync(CancellationToken ct = default)
+    /// <inheritdoc />
+    public override async Task ChayMotLanAsync(CancellationToken ct = default)
     {
         var bayGio = dongHo.BayGio;
         var homNay = dongHo.HomNay;
