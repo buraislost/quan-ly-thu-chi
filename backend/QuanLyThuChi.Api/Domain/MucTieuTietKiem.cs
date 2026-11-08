@@ -24,6 +24,17 @@ public class MucTieuTietKiem
     public DateOnly HanChot { get; private set; }
     public DateOnly NgayTao { get; private set; }
 
+    /// <summary>Sửa thông tin; mức mới thấp hơn số đã nạp thì mục tiêu coi là hoàn thành (không phát thông báo). Hạn chót so với hôm nay do tầng dịch vụ kiểm tra.</summary>
+    public void DoiThongTin(string ten, decimal soTienMucTieu, DateOnly hanChot)
+    {
+        if (string.IsNullOrWhiteSpace(ten)) throw new DomainException("Tên mục tiêu không được để trống");
+        if (soTienMucTieu <= 0) throw new DomainException("Số tiền mục tiêu phải lớn hơn 0");
+        if (hanChot <= NgayTao) throw new DomainException("Hạn chót phải sau hôm nay");
+        TenMucTieu = ten.Trim();
+        SoTienMucTieu = soTienMucTieu;
+        HanChot = hanChot;
+    }
+
     /// <summary>Nạp tiền; trả true chỉ ở lần đầu đạt đủ mục tiêu. Cho phép nạp vượt.</summary>
     public bool NapTien(decimal soTien)
     {

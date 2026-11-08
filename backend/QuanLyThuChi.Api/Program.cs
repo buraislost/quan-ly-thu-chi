@@ -79,6 +79,7 @@ builder.Services.AddScoped<QuanLyThuChi.Services.DanhMucService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.ThongBaoService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.NganSachService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.GiaoDichService>();
+builder.Services.AddScoped<QuanLyThuChi.Services.MucTieuService>();
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("MacDinh")));
 builder.Services.AddEndpointsApiExplorer();
