@@ -119,6 +119,12 @@ if (!app.Environment.IsEnvironment("Testing"))
     db.Database.Migrate();
     await DuLieuKhoiTao.NapAsync(db, scope.ServiceProvider.GetRequiredService<IBamMatKhau>(),
         scope.ServiceProvider.GetRequiredService<IDongHo>());
+    if (app.Environment.IsDevelopment())
+    {
+        // Dữ liệu demo chỉ nạp khi phát triển (idempotent theo email demo@demo.vn).
+        await DuLieuDemo.NapAsync(db, scope.ServiceProvider.GetRequiredService<IBamMatKhau>(),
+            scope.ServiceProvider.GetRequiredService<IDongHo>());
+    }
 }
 
 app.UseMiddleware<XuLyLoiMiddleware>();
