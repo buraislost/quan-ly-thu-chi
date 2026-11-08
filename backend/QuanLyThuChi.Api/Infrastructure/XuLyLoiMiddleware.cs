@@ -27,7 +27,10 @@ public class XuLyLoiMiddleware(RequestDelegate tiep, ILogger<XuLyLoiMiddleware> 
 
             context.Response.Clear();
             context.Response.StatusCode = trangThai;
-            await context.Response.WriteAsJsonAsync(new { message = thongBao });
+            if (ex is LoiNhanDangHoaDonException loiOcr)
+                await context.Response.WriteAsJsonAsync(new { message = thongBao, anhUrl = loiOcr.AnhUrl });
+            else
+                await context.Response.WriteAsJsonAsync(new { message = thongBao });
         }
     }
 }

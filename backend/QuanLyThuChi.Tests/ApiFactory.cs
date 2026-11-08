@@ -27,6 +27,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     public FakeDichVuOCR Ocr { get; } = new();
 
     // Ảnh hóa đơn khi test ghi vào thư mục tạm, không đụng vào repo.
+    public string ThuMucTep => _thuMucTep;
+
     private readonly string _thuMucTep = Path.Combine(Path.GetTempPath(), "qltc-test-" + Guid.NewGuid().ToString("N"));
 
     public ApiFactory()

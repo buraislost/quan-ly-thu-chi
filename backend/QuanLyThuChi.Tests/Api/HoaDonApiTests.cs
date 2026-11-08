@@ -31,6 +31,12 @@ public class HoaDonApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         return c.PostAsync("/api/hoa-don/quet", form);
     }
 
+    private int SoTepDaLuu()
+    {
+        var thuMuc = Path.Combine(factory.ThuMucTep, "hoa-don");
+        return Directory.Exists(thuMuc) ? Directory.GetFiles(thuMuc).Length : 0;
+    }
+
     private async Task<HttpClient> Client() =>
         await factory.TaoClientDaDangNhap($"u{Guid.NewGuid():N}@demo.vn");
 
@@ -72,11 +78,13 @@ public class HoaDonApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
     public async Task Quet_FileTxt_400()
     {
         var truoc = factory.Ocr.SoLanGoi;
+        var tepTruoc = SoTepDaLuu();
         var r = await Quet(await Client(), "xin chào"u8.ToArray(), "text/plain", "bill.txt");
 
         r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await Message(r)).Should().Be("Chỉ nhận ảnh JPG hoặc PNG");
         factory.Ocr.SoLanGoi.Should().Be(truoc);
+        SoTepDaLuu().Should().Be(tepTruoc);
     }
 
     [Fact]
@@ -91,22 +99,32 @@ public class HoaDonApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task Quet_Anh6MB_400()
     {
+        var tepTruoc = SoTepDaLuu();
         var r = await Quet(await Client(), TaoAnh(ChuKyPng, 6 * 1024 * 1024), "image/png", "to.png");
 
         r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await Message(r)).Should().Be("Ảnh vượt quá 5 MB");
+        SoTepDaLuu().Should().Be(tepTruoc);
     }
 
     [Fact]
     public async Task Quet_OCRNemLoi_400KhongNhanDangDuoc()
     {
         factory.Ocr.NemLoi = true;
+        var c = await Client();
+        var truoc = SoTepDaLuu();
         try
         {
-            var r = await Quet(await Client(), TaoAnh(ChuKyPng, 512), "image/png", "bill.png");
+            var r = await Quet(c, TaoAnh(ChuKyPng, 512), "image/png", "bill.png");
 
             r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-            (await Message(r)).Should().Be("Không nhận dạng được hóa đơn");
+            var j = await r.Content.ReadFromJsonAsync<JsonElement>();
+            j.GetProperty("message").GetString().Should().Be("Không nhận dạng được hóa đơn");
+            var url = j.GetProperty("anhUrl").GetString()!;
+            url.Should().StartWith("/uploads/hoa-don/");
+            SoTepDaLuu().Should().Be(truoc + 1);
+            File.Exists(Path.Combine(factory.ThuMucTep, "hoa-don", Path.GetFileName(url))).Should().BeTrue();
+            (await c.GetAsync(url)).StatusCode.Should().Be(HttpStatusCode.OK);
         }
         finally { factory.Ocr.NemLoi = false; }
     }
