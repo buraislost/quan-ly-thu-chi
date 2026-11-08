@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuanLyThuChi.Api", "QuanLyThuChi.Api\QuanLyThuChi.Api.csproj", "{EC38DABA-5594-4058-B9A3-8E8011601765}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuanLyThuChi.Tests", "QuanLyThuChi.Tests\QuanLyThuChi.Tests.csproj", "{EE693604-4532-4ED9-AF85-3E9BAE02238A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Debug|x64.Build.0 = Debug|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Debug|x86.Build.0 = Debug|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Release|x64.ActiveCfg = Release|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Release|x64.Build.0 = Release|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Release|x86.ActiveCfg = Release|Any CPU
+		{EC38DABA-5594-4058-B9A3-8E8011601765}.Release|x86.Build.0 = Release|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Debug|x64.Build.0 = Debug|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Debug|x86.Build.0 = Debug|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Release|x64.ActiveCfg = Release|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Release|x64.Build.0 = Release|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Release|x86.ActiveCfg = Release|Any CPU
+		{EE693604-4532-4ED9-AF85-3E9BAE02238A}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
