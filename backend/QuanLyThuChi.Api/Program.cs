@@ -71,6 +71,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IDongHo, DongHoVietNam>();
 builder.Services.AddSingleton<IBamMatKhau, BCryptBamMatKhau>();
+builder.Services.AddScoped<QuanLyThuChi.Services.TaiKhoanService>();
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("MacDinh")));
 builder.Services.AddEndpointsApiExplorer();

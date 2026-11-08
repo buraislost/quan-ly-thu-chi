@@ -1,3 +1,6 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -71,6 +74,32 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         using var scope = TaoScope();
         return hanhDong(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+    }
+
+    /// <summary>Đăng ký (nếu email chưa có) rồi đăng nhập qua API; trả client đã gắn Bearer token.</summary>
+    public async Task<HttpClient> TaoClientDaDangNhap(string email, string matKhau = "matkhau123")
+    {
+        var client = CreateClient();
+        var daCo = VoiDb(db => db.TaiKhoan.Any(t => t.Email == email.Trim().ToLower()));
+        if (!daCo)
+        {
+            var dangKy = await client.PostAsJsonAsync("/api/auth/dang-ky", new { hoTen = "Người dùng thử", email, matKhau });
+            dangKy.EnsureSuccessStatusCode();
+        }
+        return await GanToken(client, email, matKhau);
+    }
+
+    /// <summary>Đăng nhập tài khoản quản trị viên khởi tạo (admin@demo.vn).</summary>
+    public Task<HttpClient> TaoClientAdmin() =>
+        GanToken(CreateClient(), DuLieuKhoiTao.EmailAdmin, DuLieuKhoiTao.MatKhauAdmin);
+
+    private static async Task<HttpClient> GanToken(HttpClient client, string email, string matKhau)
+    {
+        var dangNhap = await client.PostAsJsonAsync("/api/auth/dang-nhap", new { email, matKhau });
+        dangNhap.EnsureSuccessStatusCode();
+        var token = (await dangNhap.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 
     protected override void Dispose(bool disposing)
