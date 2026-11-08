@@ -65,6 +65,14 @@ public class GiaoDich
         SoTien = soTien; Loai = loai; Ngay = ngay; GhiChu = ghiChu;
     }
 
+    /// <summary>Chuyển giao dịch sang danh mục khác cùng loại; ví và số dư không đổi.</summary>
+    public void ChuyenDanhMuc(DanhMuc moi)
+    {
+        if (moi.Loai != Loai) throw new DomainException("Danh mục không đúng loại giao dịch");
+        DanhMuc = moi;
+        MaDanhMuc = moi.MaDanhMuc;
+    }
+
     public void GanHoaDon(HoaDon hoaDon) => HoaDon = hoaDon;
 
     private static void ApDung(Vi vi, decimal soTien, LoaiGiaoDich loai)

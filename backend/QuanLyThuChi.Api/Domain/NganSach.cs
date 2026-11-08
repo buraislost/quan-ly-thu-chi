@@ -63,4 +63,14 @@ public class NganSach
         DaCanhBaoNguong = tienDo >= NguongCanhBao;
         DaCanhBaoVuot = tienDo > 100m;
     }
+
+    /// <summary>Chuyển ngân sách sang danh mục khác (khi xóa danh mục).</summary>
+    public void ChuyenDanhMuc(int maDanhMuc) => MaDanhMuc = maDanhMuc;
+
+    /// <summary>Cộng thêm hạn mức từ một ngân sách bị gộp; cờ cảnh báo được tính lại khi đọc.</summary>
+    public void GopHanMuc(decimal them)
+    {
+        if (them <= 0) throw new DomainException("Hạn mức phải lớn hơn 0");
+        HanMuc += them;
+    }
 }

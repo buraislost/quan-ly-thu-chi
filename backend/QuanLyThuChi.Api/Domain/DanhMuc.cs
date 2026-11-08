@@ -27,6 +27,15 @@ public class DanhMuc
     public bool LaMacDinh { get; private set; }
     public bool LaHeThong { get; private set; }
 
+    /// <summary>Đổi tên, biểu tượng và màu; loại danh mục không đổi được.</summary>
+    public void DoiThongTin(string ten, string? bieuTuong, string? mauSac)
+    {
+        if (string.IsNullOrWhiteSpace(ten)) throw new DomainException("Tên danh mục không được để trống");
+        TenDanhMuc = ten.Trim();
+        BieuTuong = bieuTuong;
+        MauSac = mauSac;
+    }
+
     public bool LaCuaNguoiDung(int maTk) => MaTaiKhoan == maTk;
 
     public bool DangDuocSuDung(bool coGiaoDich, bool coNganSach) => coGiaoDich || coNganSach;

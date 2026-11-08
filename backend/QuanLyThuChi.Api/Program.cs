@@ -11,6 +11,8 @@ using QuanLyThuChi.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
+    // Enum đi qua API dưới dạng tên ("Thu", "TienMat") để giao diện dễ đọc.
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()))
     .ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = ctx =>
     {
         var errors = ctx.ModelState
@@ -72,6 +74,8 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IDongHo, DongHoVietNam>();
 builder.Services.AddSingleton<IBamMatKhau, BCryptBamMatKhau>();
 builder.Services.AddScoped<QuanLyThuChi.Services.TaiKhoanService>();
+builder.Services.AddScoped<QuanLyThuChi.Services.ViService>();
+builder.Services.AddScoped<QuanLyThuChi.Services.DanhMucService>();
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("MacDinh")));
 builder.Services.AddEndpointsApiExplorer();
