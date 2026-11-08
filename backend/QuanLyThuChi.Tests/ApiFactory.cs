@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using QuanLyThuChi.Data;
 using QuanLyThuChi.Domain;
+using QuanLyThuChi.Infrastructure;
 using QuanLyThuChi.Tests.Fakes;
 
 namespace QuanLyThuChi.Tests;
@@ -22,6 +23,11 @@ public class ApiFactory : WebApplicationFactory<Program>
     private readonly SqliteConnection _ketNoi = new("DataSource=:memory:");
 
     public DongHoGia DongHo { get; } = new();
+
+    public FakeDichVuOCR Ocr { get; } = new();
+
+    // Ảnh hóa đơn khi test ghi vào thư mục tạm, không đụng vào repo.
+    private readonly string _thuMucTep = Path.Combine(Path.GetTempPath(), "qltc-test-" + Guid.NewGuid().ToString("N"));
 
     public ApiFactory()
     {
@@ -34,6 +40,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         builder.ConfigureAppConfiguration((_, cfg) => cfg.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Jwt:Khoa"] = "khoa-chi-dung-cho-test-khong-dung-that-0123456789",
+            ["LuuTep:ThuMuc"] = _thuMucTep,
         }));
         builder.ConfigureServices(services =>
         {
@@ -48,8 +55,8 @@ public class ApiFactory : WebApplicationFactory<Program>
             // Nạp controller của project test (route /api/_test/dto) để kiểm tra lỗi ModelState.
             services.AddControllers().AddApplicationPart(typeof(ApiFactory).Assembly);
 
-            // Hook cho các task sau:
-            // - Task 13: thay IDichVuOCR bằng FakeDichVuOCR.
+            services.RemoveAll<IDichVuOCR>();
+            services.AddSingleton<IDichVuOCR>(Ocr);
         });
     }
 
@@ -105,6 +112,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing) _ketNoi.Dispose();
+        if (!disposing) return;
+        _ketNoi.Dispose();
+        try { if (Directory.Exists(_thuMucTep)) Directory.Delete(_thuMucTep, true); } catch (IOException) { }
     }
 }

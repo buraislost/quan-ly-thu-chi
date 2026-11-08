@@ -80,6 +80,20 @@ builder.Services.AddScoped<QuanLyThuChi.Services.ThongBaoService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.NganSachService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.GiaoDichService>();
 builder.Services.AddScoped<QuanLyThuChi.Services.MucTieuService>();
+builder.Services.AddOptions<GeminiOptions>().Bind(builder.Configuration.GetSection(GeminiOptions.TenMuc));
+builder.Services.AddOptions<LuuTepOptions>().Bind(builder.Configuration.GetSection(LuuTepOptions.TenMuc));
+builder.Services.AddScoped<LuuTepService>();
+builder.Services.AddScoped<QuanLyThuChi.Services.HoaDonService>();
+if (builder.Configuration.GetValue<bool>($"{GeminiOptions.TenMuc}:{nameof(GeminiOptions.DungBanGia)}"))
+{
+    // Demo offline: hóa đơn mẫu cố định, không gọi Gemini.
+    builder.Services.AddSingleton<IDichVuOCR, DichVuOCRMau>();
+}
+else
+{
+    // Thiếu ApiKey không làm hỏng khởi động; lỗi chỉ phát sinh khi quét (GeminiDichVuOCR).
+    builder.Services.AddHttpClient<IDichVuOCR, GeminiDichVuOCR>(c => c.Timeout = TimeSpan.FromSeconds(30));
+}
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("MacDinh")));
 builder.Services.AddEndpointsApiExplorer();
@@ -106,6 +120,16 @@ if (!app.Environment.IsEnvironment("Testing"))
 {
     app.UseHttpsRedirection();
 }
+
+// Phục vụ ảnh hóa đơn đã tải lên tại /uploads/... (cấu hình đọc sau Build để test ghi đè được LuuTep:ThuMuc).
+var thuMucTep = LuuTepService.ThuMucGoc(app.Environment.ContentRootPath,
+    app.Configuration.GetSection(LuuTepOptions.TenMuc).Get<LuuTepOptions>() ?? new LuuTepOptions());
+Directory.CreateDirectory(Path.Combine(thuMucTep, LuuTepService.ThuMucCon));
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(thuMucTep),
+    RequestPath = LuuTepService.TienToUrl,
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
