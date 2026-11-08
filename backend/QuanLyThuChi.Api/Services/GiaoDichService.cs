@@ -23,7 +23,7 @@ public class GiaoDichService(AppDbContext db, IDongHo dongHo, ViService viServic
         if (dm.LaHeThong && maMucTieu is null) throw new DomainException(LoiDanhMucHeThong);
         if (r.HoaDon is not null && r.Loai != LoaiGiaoDich.Chi) throw new DomainException(LoiHoaDonChiChoChi);
 
-        var gd = new GiaoDich(maTk, vi, dm, r.SoTien, r.Loai, r.NgayGiaoDich ?? dongHo.BayGio, r.GhiChu, maMucTieu);
+        var gd = new GiaoDich(maTk, vi, dm, r.SoTien, r.Loai, r.NgayGiaoDich is { } ngayTao ? dongHo.SangGioVietNam(ngayTao) : dongHo.BayGio, r.GhiChu, maMucTieu);
         if (r.HoaDon is { } hd) gd.GanHoaDon(TaoHoaDon(hd, gd.Ngay));
 
         await using var tx = await BatDauAsync(ct);
@@ -47,7 +47,7 @@ public class GiaoDichService(AppDbContext db, IDongHo dongHo, ViService viServic
 
         var cu = (gd.MaDanhMuc, gd.Ngay, gd.Loai);
         await using var tx = await BatDauAsync(ct);
-        gd.CapNhat(vi, dm, r.SoTien, r.Loai, r.NgayGiaoDich ?? gd.Ngay, r.GhiChu);
+        gd.CapNhat(vi, dm, r.SoTien, r.Loai, r.NgayGiaoDich is { } ngayMoi ? dongHo.SangGioVietNam(ngayMoi) : gd.Ngay, r.GhiChu);
         await db.SaveChangesAsync(ct);
         await KiemTraNganSachAsync(maTk, [cu, (gd.MaDanhMuc, gd.Ngay, gd.Loai)], ct);
         await db.SaveChangesAsync(ct);

@@ -10,4 +10,7 @@ public interface IDongHo
 
     /// <summary>Ngày hiện tại theo giờ Việt Nam.</summary>
     DateOnly HomNay { get; }
+
+    /// <summary>Đổi giờ Utc/Local sang giờ Việt Nam; giá trị Unspecified coi như đã là giờ Việt Nam. Kết quả luôn Unspecified.</summary>
+    DateTime SangGioVietNam(DateTime gio);
 }

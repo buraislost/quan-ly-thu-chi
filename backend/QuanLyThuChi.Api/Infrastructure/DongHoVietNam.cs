@@ -24,6 +24,16 @@ public class DongHoVietNam : IDongHo
 
     public DateOnly HomNay => DateOnly.FromDateTime(BayGio);
 
+    public DateTime SangGioVietNam(DateTime gio) => ChuyenSangGioVietNam(gio, _mui);
+
+    /// <summary>Utc/Local được đổi sang giờ Việt Nam; Unspecified coi như đã là giờ Việt Nam. Kết quả luôn Unspecified.</summary>
+    public static DateTime ChuyenSangGioVietNam(DateTime gio, TimeZoneInfo? mui = null)
+    {
+        if (gio.Kind == DateTimeKind.Unspecified) return gio;
+        var vn = TimeZoneInfo.ConvertTime(gio, mui ?? TimNhom());
+        return DateTime.SpecifyKind(vn, DateTimeKind.Unspecified);
+    }
+
     private static TimeZoneInfo TimNhom()
     {
         try

@@ -186,6 +186,46 @@ public class GiaoDichApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         ns.GetProperty("soDaChi").GetDecimal().Should().Be(100_000);
     }
 
+    [Theory]
+    [InlineData("2026-10-31T17:30:00Z")]
+    [InlineData("2026-11-01T00:30:00+07:00")]
+    public async Task ThemChi_NgayCoMuiGio_ChuanHoaGioVietNam(string ngay)
+    {
+        var (c, _, vi) = await NguoiDung();
+        var dm = MaDm("Ăn uống", LoaiGiaoDich.Chi);
+        await LapNganSach(c, dm, 1_000_000, 11, 2026);
+
+        var r = await c.PostAsJsonAsync("/api/giao-dich", new
+        {
+            maVi = vi, maDanhMuc = dm, soTien = 100_000, loai = "Chi", ngayGiaoDich = ngay,
+        });
+
+        r.StatusCode.Should().Be(HttpStatusCode.Created);
+        (await r.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("ngayGiaoDich").GetDateTime()
+            .Should().Be(new DateTime(2026, 11, 1, 0, 30, 0));
+        var ns = (await c.GetFromJsonAsync<JsonElement>("/api/ngan-sach?thang=11&nam=2026")).EnumerateArray().Single();
+        ns.GetProperty("soDaChi").GetDecimal().Should().Be(100_000);
+    }
+
+    [Fact]
+    public async Task SuaChi_NgayCoMuiGio_ChuanHoaGioVietNam()
+    {
+        var (c, _, vi) = await NguoiDung();
+        var dm = MaDm("Ăn uống", LoaiGiaoDich.Chi);
+        var ma = await TaoThanhCong(c, vi, dm, 1000, LoaiGiaoDich.Chi, Ngay);
+
+        var r = await c.PutAsJsonAsync($"/api/giao-dich/{ma}", new
+        {
+            maVi = vi, maDanhMuc = dm, soTien = 1000, loai = "Chi", ngayGiaoDich = "2026-10-31T17:30:00Z",
+        });
+
+        r.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await r.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("ngayGiaoDich").GetDateTime()
+            .Should().Be(new DateTime(2026, 11, 1, 0, 30, 0));
+        factory.VoiDb(db => db.GiaoDich.AsNoTracking().Single(g => g.MaGiaoDich == ma).Ngay)
+            .Should().Be(new DateTime(2026, 11, 1, 0, 30, 0));
+    }
+
     [Fact]
     public async Task ThemChi_Dat85PhanTram_TaoThongBaoCanhBao()
     {
