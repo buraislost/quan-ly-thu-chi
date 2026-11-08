@@ -64,6 +64,13 @@ public class NganSach
         DaCanhBaoVuot = tienDo > 100m;
     }
 
+    /// <summary>Đổi ngưỡng cảnh báo (1..100); người gọi nên tính lại cờ bằng <see cref="CapNhatHanMuc"/>.</summary>
+    public void DoiNguong(int nguongCanhBao)
+    {
+        if (nguongCanhBao is < 1 or > 100) throw new DomainException("Ngưỡng cảnh báo phải từ 1 đến 100");
+        NguongCanhBao = nguongCanhBao;
+    }
+
     /// <summary>Chuyển ngân sách sang danh mục khác (khi xóa danh mục).</summary>
     public void ChuyenDanhMuc(int maDanhMuc) => MaDanhMuc = maDanhMuc;
 
