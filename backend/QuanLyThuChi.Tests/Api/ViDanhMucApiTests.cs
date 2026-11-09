@@ -482,4 +482,28 @@ public class ViDanhMucApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
             return 0;
         });
     }
+
+    [Fact]
+    public async Task XoaDanhMuc_ChuyenChiSangDich_VuotNguong_TaoCanhBaoNganSach()
+    {
+        var client = await factory.TaoClientDaDangNhap(EmailMoi());
+        var vi = await TaoVi(client, "Ví chi", 1_000_000);
+        var nguon = await TaoDanhMuc(client, "Quà tặng");
+        var dich = await TaoDanhMuc(client, "Mua sắm riêng");
+        foreach (var (soTien, ngay) in new[] { (90_000m, Ngay), (60_000m, Ngay.AddMonths(-1)) })
+            (await client.PostAsJsonAsync("/api/giao-dich", new { maVi = vi, maDanhMuc = nguon, soTien, loai = "Chi", ngayGiaoDich = ngay }))
+                .StatusCode.Should().Be(HttpStatusCode.Created);
+        (await client.PostAsJsonAsync("/api/ngan-sach", new { maDanhMuc = dich, hanMuc = 100_000, thang = 11, nam = 2026 }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+        (await client.PostAsJsonAsync("/api/ngan-sach", new { maDanhMuc = dich, hanMuc = 50_000, thang = 10, nam = 2026 }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+
+        (await client.DeleteAsync($"/api/danh-muc/{nguon}?chuyenSang={dich}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var thongBao = (await client.GetFromJsonAsync<JsonElement>("/api/thong-bao")).EnumerateArray()
+            .Select(x => x.GetProperty("noiDung").GetString()).ToList();
+        thongBao.Should().BeEquivalentTo(
+            "Ngân sách Mua sắm riêng tháng 11/2026 đã dùng 90%",
+            "Ngân sách Mua sắm riêng tháng 10/2026 đã vượt hạn mức");
+    }
 }

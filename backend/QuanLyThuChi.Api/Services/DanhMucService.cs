@@ -6,7 +6,11 @@ using QuanLyThuChi.Dtos;
 namespace QuanLyThuChi.Services;
 
 /// <summary>Quản lý danh mục thu/chi của người dùng cùng danh mục mặc định dùng chung (UC 3.3, 3.4).</summary>
-public class DanhMucService(AppDbContext db)
+/// <remarks>
+/// NganSachService phụ thuộc DanhMucService nên không tiêm ngược qua constructor (vòng phụ thuộc);
+/// lấy từ <paramref name="dichVu"/> cùng scope khi cần kiểm tra ngân sách sau khi xóa danh mục.
+/// </remarks>
+public class DanhMucService(AppDbContext db, IServiceProvider dichVu)
 {
     public const string LoiTrungTen = "Tên danh mục đã tồn tại";
     public const string LoiSuaMacDinh = "Không thể sửa danh mục mặc định";
@@ -51,7 +55,8 @@ public class DanhMucService(AppDbContext db)
 
     /// <summary>
     /// Xóa danh mục của người dùng. Nếu đang được dùng (giao dịch hoặc ngân sách) thì phải có <paramref name="chuyenSang"/>:
-    /// giao dịch được chuyển sang đó, ngân sách cùng tháng được gộp hạn mức; tất cả trong một transaction.
+    /// giao dịch được chuyển sang đó, ngân sách cùng tháng được gộp hạn mức, rồi kiểm tra lại cảnh báo ngân sách của
+    /// danh mục đích cho từng tháng có giao dịch chi được chuyển; tất cả trong một transaction.
     /// </summary>
     public async Task XoaAsync(int maTk, int maDm, int? chuyenSang, CancellationToken ct = default)
     {
@@ -88,6 +93,14 @@ public class DanhMucService(AppDbContext db)
                 }
             }
             db.DanhMuc.Remove(dm);
+            await db.SaveChangesAsync(ct);
+
+            // Chi chuyển sang có thể đẩy ngân sách của danh mục đích qua ngưỡng (giống khi thêm giao dịch).
+            var nganSachService = dichVu.GetRequiredService<NganSachService>();
+            var cacThang = giaoDich.Where(g => g.Loai == LoaiGiaoDich.Chi)
+                .Select(g => (g.Ngay.Month, g.Ngay.Year)).Distinct().ToList();
+            foreach (var (thang, nam) in cacThang)
+                await nganSachService.KiemTraSauGiaoDichAsync(maTk, dich.MaDanhMuc, thang, nam, ct);
             await db.SaveChangesAsync(ct);
             await giaoDichCsdl.CommitAsync(ct);
             return;
