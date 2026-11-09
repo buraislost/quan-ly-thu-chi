@@ -115,7 +115,8 @@ backend/
 docs/
   thiet-ke/          Tài liệu thiết kế và kế hoạch
   staruml/           Mô hình StarUML (.mdj) và ảnh PNG các sơ đồ:
-                       QuanLyThuChi.mdj  – use case, sơ đồ lớp
+                       QuanLyThuChi.mdj  – use case (5 tác nhân, mức 1–3), sơ đồ lớp
+                       use-case/         – ảnh PNG 22 sơ đồ use case
                        SoDoQuanHe.mdj    – sơ đồ quan hệ cơ sở dữ liệu
                        SoDoTuanTu.mdj    – 6 sơ đồ tuần tự
                        SoDoTrangThai.mdj – 4 sơ đồ trạng thái
