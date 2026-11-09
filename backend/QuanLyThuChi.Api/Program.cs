@@ -70,6 +70,23 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         };
     });
 builder.Services.AddAuthorization();
+
+// CORS cho giao diện Flutter web. Danh sách Cors:NguonChoPhep đọc lười (qua options) để test ghi đè được;
+// danh sách trống thì khi phát triển (và Testing) cho phép mọi cổng của localhost/127.0.0.1, môi trường khác chặn hết.
+const string ChinhSachCors = "GiaoDien";
+var choPhepLocalhost = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing");
+builder.Services.AddCors();
+builder.Services.AddOptions<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>()
+    .Configure<IConfiguration>((o, cfg) => o.AddPolicy(ChinhSachCors, p =>
+    {
+        var nguon = cfg.GetSection("Cors:NguonChoPhep").Get<string[]>() ?? [];
+        if (nguon.Length > 0) p.WithOrigins(nguon);
+        else if (choPhepLocalhost)
+            p.SetIsOriginAllowed(goc => Uri.TryCreate(goc, UriKind.Absolute, out var uri)
+                                      && uri.Host is "localhost" or "127.0.0.1");
+        else p.SetIsOriginAllowed(_ => false);
+        p.AllowAnyHeader().AllowAnyMethod();
+    }));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IDongHo, DongHoVietNam>();
 builder.Services.AddSingleton<IBamMatKhau, BCryptBamMatKhau>();
@@ -150,6 +167,9 @@ if (!app.Environment.IsEnvironment("Testing"))
 {
     app.UseHttpsRedirection();
 }
+
+// Đặt trước static files để ảnh /uploads cũng có header CORS (Flutter web tải ảnh bằng XHR).
+app.UseCors(ChinhSachCors);
 
 // Phục vụ ảnh hóa đơn đã tải lên tại /uploads/... (cấu hình đọc sau Build để test ghi đè được LuuTep:ThuMuc).
 var thuMucTep = LuuTepService.ThuMucGoc(app.Environment.ContentRootPath,
