@@ -133,3 +133,19 @@ public class DuLieuDemoTests : IClassFixture<ApiFactory>
         res.EnsureSuccessStatusCode();
     }
 }
+
+public class SwaggerBearerTests(ApiFactory f) : IClassFixture<ApiFactory>
+{
+    [Fact]
+    public async Task Swagger_CoKhaiBaoBearer_DeCoNutAuthorize()
+    {
+        var res = await f.CreateClient().GetAsync("/swagger/v1/swagger.json");
+        res.EnsureSuccessStatusCode();
+        var json = System.Text.Json.JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
+        var bearer = json.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer");
+        bearer.GetProperty("type").GetString().Should().Be("http");
+        bearer.GetProperty("scheme").GetString().Should().Be("bearer");
+        bearer.GetProperty("bearerFormat").GetString().Should().Be("JWT");
+        json.GetProperty("security").GetArrayLength().Should().BeGreaterThan(0);
+    }
+}
