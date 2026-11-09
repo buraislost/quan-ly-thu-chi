@@ -84,7 +84,7 @@ public static class DuLieuDemo
         {
             var ngayLuong = new DateOnly(ngay.Year, ngay.Month, NgayNhanLuong);
             if (ngayLuong > homNay) continue;
-            khoans.Add(new Khoan(ngayLuong.ToDateTime(new TimeOnly(8, 30)), nganHang, luongDm, Luong, LoaiGiaoDich.Thu,
+            khoans.Add(new Khoan(GioHopLe(ngayLuong.ToDateTime(new TimeOnly(8, 30)), bayGio), nganHang, luongDm, Luong, LoaiGiaoDich.Thu,
                 $"Lương tháng {ngayLuong.Month:00}/{ngayLuong.Year}", null));
         }
 

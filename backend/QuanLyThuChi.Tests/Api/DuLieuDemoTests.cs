@@ -134,6 +134,26 @@ public class DuLieuDemoTests : IClassFixture<ApiFactory>
     }
 }
 
+/// <summary>Factory riêng (CSDL riêng) vì dữ liệu demo chỉ nạp một lần theo email.</summary>
+public class DuLieuDemoNgayLuongTests(ApiFactory f) : IClassFixture<ApiFactory>
+{
+    [Fact]
+    public async Task Demo_HomNayLaNgayLuongTruocGioNhanLuong_KhongCoGiaoDichTuongLai()
+    {
+        f.DongHo.BayGio = new DateTime(2026, 11, 5, 7, 0, 0, DateTimeKind.Unspecified);
+        using (var scope = f.TaoScope())
+        {
+            var sp = scope.ServiceProvider;
+            await DuLieuDemo.NapAsync(sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<IBamMatKhau>(), f.DongHo);
+        }
+
+        var gds = f.VoiDb(db => db.GiaoDich.AsNoTracking()
+            .Where(g => g.MaTaiKhoan == db.TaiKhoan.Single(t => t.Email == DuLieuDemo.EmailDemo).MaTaiKhoan).ToList());
+        gds.Should().NotBeEmpty().And.OnlyContain(g => g.Ngay <= f.DongHo.BayGio);
+        gds.Should().ContainSingle(g => g.Loai == LoaiGiaoDich.Thu && g.Ngay.Month == 11 && g.Ngay.Day == 5);
+    }
+}
+
 public class SwaggerBearerTests(ApiFactory f) : IClassFixture<ApiFactory>
 {
     [Fact]
