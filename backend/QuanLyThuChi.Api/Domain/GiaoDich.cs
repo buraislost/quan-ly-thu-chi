@@ -43,21 +43,33 @@ public class GiaoDich
         else Vi.CongTien(SoTien);
     }
 
-    /// <summary>Hoàn tác giá trị cũ rồi áp giá trị mới. Nếu thất bại, giữ nguyên trạng thái ban đầu của giao dịch và ví.</summary>
+    /// <summary>
+    /// Cập nhật giao dịch. Cùng ví: chỉ áp phần chênh lệch (ảnh hưởng mới − ảnh hưởng cũ) nên sửa ghi chú khoản thu đã tiêu
+    /// vẫn được. Đổi ví: hoàn tác ví cũ rồi áp ví mới. Nếu thất bại, giữ nguyên trạng thái ban đầu của giao dịch và ví.
+    /// </summary>
     public void CapNhat(Vi vi, DanhMuc dm, decimal soTien, LoaiGiaoDich loai, DateTime ngay, string? ghiChu)
     {
         KiemTraHopLe(dm, soTien, loai);
 
-        var viCu = Vi; var tienCu = SoTien; var loaiCu = Loai;
-        Huy();
-        try
+        if (CungVi(vi))
         {
-            ApDung(vi, soTien, loai);
+            var chenhLech = AnhHuong(soTien, loai) - AnhHuong(SoTien, Loai);
+            if (chenhLech > 0) Vi.CongTien(chenhLech);
+            else if (chenhLech < 0) Vi.TruTien(-chenhLech);
         }
-        catch
+        else
         {
-            ApDung(viCu, tienCu, loaiCu); // khôi phục ví cũ
-            throw;
+            var viCu = Vi; var tienCu = SoTien; var loaiCu = Loai;
+            Huy();
+            try
+            {
+                ApDung(vi, soTien, loai);
+            }
+            catch
+            {
+                ApDung(viCu, tienCu, loaiCu); // khôi phục ví cũ
+                throw;
+            }
         }
 
         Vi = vi; MaVi = vi.MaVi;
@@ -74,6 +86,11 @@ public class GiaoDich
     }
 
     public void GanHoaDon(HoaDon hoaDon) => HoaDon = hoaDon;
+
+    private bool CungVi(Vi vi) => ReferenceEquals(vi, Vi) || (vi.MaVi != 0 && vi.MaVi == MaVi);
+
+    /// <summary>Ảnh hưởng lên số dư ví: thu là +soTien, chi là −soTien.</summary>
+    private static decimal AnhHuong(decimal soTien, LoaiGiaoDich loai) => loai == LoaiGiaoDich.Thu ? soTien : -soTien;
 
     private static void ApDung(Vi vi, decimal soTien, LoaiGiaoDich loai)
     {

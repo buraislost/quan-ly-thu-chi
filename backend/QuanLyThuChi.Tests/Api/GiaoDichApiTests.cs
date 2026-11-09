@@ -147,6 +147,41 @@ public class GiaoDichApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task SuaGhiChuKhoanThuDaTieu_200()
+    {
+        var (c, _, vi) = await NguoiDung(0);
+        var luong = MaDm("Lương", LoaiGiaoDich.Thu);
+        var thu = await TaoThanhCong(c, vi, luong, 1_000_000, LoaiGiaoDich.Thu, Ngay);
+        await TaoThanhCong(c, vi, MaDm("Ăn uống", LoaiGiaoDich.Chi), 900_000, LoaiGiaoDich.Chi, Ngay);
+
+        var r = await c.PutAsJsonAsync($"/api/giao-dich/{thu}", new
+        {
+            maVi = vi, maDanhMuc = luong, soTien = 1_000_000, loai = "Thu", ghiChu = "Lương tháng 11",
+        });
+
+        r.StatusCode.Should().Be(HttpStatusCode.OK, await r.Content.ReadAsStringAsync());
+        SoDu(vi).Should().Be(100_000);
+        factory.VoiDb(db => db.GiaoDich.AsNoTracking().Single(g => g.MaGiaoDich == thu)).GhiChu.Should().Be("Lương tháng 11");
+    }
+
+    [Fact]
+    public async Task TangSoTienKhoanThuDaTieu_200VaSoDuDung()
+    {
+        var (c, _, vi) = await NguoiDung(0);
+        var luong = MaDm("Lương", LoaiGiaoDich.Thu);
+        var thu = await TaoThanhCong(c, vi, luong, 1_000_000, LoaiGiaoDich.Thu, Ngay);
+        await TaoThanhCong(c, vi, MaDm("Ăn uống", LoaiGiaoDich.Chi), 900_000, LoaiGiaoDich.Chi, Ngay);
+
+        var r = await c.PutAsJsonAsync($"/api/giao-dich/{thu}", new
+        {
+            maVi = vi, maDanhMuc = luong, soTien = 1_200_000, loai = "Thu",
+        });
+
+        r.StatusCode.Should().Be(HttpStatusCode.OK, await r.Content.ReadAsStringAsync());
+        SoDu(vi).Should().Be(300_000);
+    }
+
+    [Fact]
     public async Task ThemChiThangTruoc_ChiAnhHuongNganSachThangTruoc()
     {
         var (c, _, vi) = await NguoiDung();

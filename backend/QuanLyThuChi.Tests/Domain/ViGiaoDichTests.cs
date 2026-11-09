@@ -122,6 +122,58 @@ public class ViGiaoDichTests
     }
 
     [Fact]
+    public void CapNhat_ThuDaTieu_ChiDoiGhiChu_ThanhCongVaSoDuGiuNguyen()
+    {
+        var vi = TaoVi(0);
+        var thu = new GiaoDich(1, vi, TaoDanhMuc(LoaiGiaoDich.Thu), 1_000_000, LoaiGiaoDich.Thu, Ngay, null);
+        thu.GhiNhan();
+        vi.TruTien(900_000);
+
+        thu.CapNhat(vi, thu.DanhMuc, 1_000_000, LoaiGiaoDich.Thu, Ngay, "Lương tháng 11");
+
+        vi.SoDu.Should().Be(100_000);
+        thu.GhiChu.Should().Be("Lương tháng 11");
+    }
+
+    [Fact]
+    public void CapNhat_CungVi_ChiApPhanChenhLech()
+    {
+        var vi = TaoVi(0);
+        var dmThu = TaoDanhMuc(LoaiGiaoDich.Thu);
+        var thu = new GiaoDich(1, vi, dmThu, 1_000_000, LoaiGiaoDich.Thu, Ngay, null);
+        thu.GhiNhan();
+        vi.TruTien(900_000);
+
+        thu.CapNhat(vi, dmThu, 1_500_000, LoaiGiaoDich.Thu, Ngay, null); // tăng khoản thu
+        vi.SoDu.Should().Be(600_000);
+
+        thu.CapNhat(vi, dmThu, 1_200_000, LoaiGiaoDich.Thu, Ngay, null); // giảm 300.000, ví còn đủ
+        vi.SoDu.Should().Be(300_000);
+
+        var act = () => thu.CapNhat(vi, dmThu, 200_000, LoaiGiaoDich.Thu, Ngay.AddDays(1), "mới"); // giảm 1.000.000
+        act.Should().Throw<DomainException>().WithMessage("Số dư ví không đủ");
+        vi.SoDu.Should().Be(300_000);
+        thu.SoTien.Should().Be(1_200_000);
+        thu.Ngay.Should().Be(Ngay);
+        thu.GhiChu.Should().BeNull();
+    }
+
+    [Fact]
+    public void CapNhat_ChiCungVi_TangSoTien_ChiTruPhanTang()
+    {
+        var vi = TaoVi(150_000);
+        var dm = TaoDanhMuc(LoaiGiaoDich.Chi);
+        var gd = new GiaoDich(1, vi, dm, 100_000, LoaiGiaoDich.Chi, Ngay, null);
+        gd.GhiNhan();
+        vi.SoDu.Should().Be(50_000);
+
+        gd.CapNhat(vi, dm, 150_000, LoaiGiaoDich.Chi, Ngay, null);
+
+        vi.SoDu.Should().Be(0);
+        gd.SoTien.Should().Be(150_000);
+    }
+
+    [Fact]
     public void CapNhat_ViMoiKhongDu_NemLoiVaGiuNguyenTruongCu()
     {
         var a = TaoVi(500_000, "A");
