@@ -67,8 +67,8 @@ public class DanhMucService(AppDbContext db)
             if (dich.Loai != dm.Loai) throw new DomainException(LoiKhacLoai);
         }
 
-        var giaoDich = await db.GiaoDich.Where(g => g.MaDanhMuc == maDm).ToListAsync(ct);
-        var nganSach = await db.NganSach.Where(n => n.MaDanhMuc == maDm).ToListAsync(ct);
+        var giaoDich = await db.GiaoDich.Where(g => g.MaDanhMuc == maDm && g.MaTaiKhoan == maTk).ToListAsync(ct);
+        var nganSach = await db.NganSach.Where(n => n.MaDanhMuc == maDm && n.MaTaiKhoan == maTk).ToListAsync(ct);
         if (dm.DangDuocSuDung(giaoDich.Count > 0, nganSach.Count > 0))
         {
             if (dich is null) throw new DomainException(LoiCanChuyenSang);
@@ -76,7 +76,7 @@ public class DanhMucService(AppDbContext db)
             await using var giaoDichCsdl = await db.Database.BeginTransactionAsync(ct);
             foreach (var g in giaoDich) g.ChuyenDanhMuc(dich);
 
-            var nganSachDich = await db.NganSach.Where(n => n.MaDanhMuc == dich.MaDanhMuc).ToListAsync(ct);
+            var nganSachDich = await db.NganSach.Where(n => n.MaDanhMuc == dich.MaDanhMuc && n.MaTaiKhoan == maTk).ToListAsync(ct);
             foreach (var n in nganSach)
             {
                 var trung = nganSachDich.FirstOrDefault(x => x.Thang == n.Thang && x.Nam == n.Nam);

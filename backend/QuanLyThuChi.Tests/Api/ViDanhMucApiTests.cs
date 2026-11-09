@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using QuanLyThuChi.Domain;
 
 namespace QuanLyThuChi.Tests.Api;
@@ -447,6 +448,37 @@ public class ViDanhMucApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
             ns[1].Thang.Should().Be(12);
             ns[1].HanMuc.Should().Be(100_000);
             db.DanhMuc.Any(d => d.MaDanhMuc == nguon).Should().BeFalse();
+            return 0;
+        });
+    }
+
+    [Fact]
+    public async Task XoaDanhMuc_ChuyenSangMacDinh_KhongDungNganSachNguoiKhac()
+    {
+        var anUong = MaMacDinh("Ăn uống", LoaiGiaoDich.Chi);
+        var b = await factory.TaoClientDaDangNhap(EmailMoi());
+        var maB = await MaTaiKhoan(b);
+        (await b.PostAsJsonAsync("/api/ngan-sach", new { maDanhMuc = anUong, hanMuc = 500_000, thang = 11, nam = 2026 }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var a = await factory.TaoClientDaDangNhap(EmailMoi());
+        var maA = await MaTaiKhoan(a);
+        var cafe = await TaoDanhMuc(a, "Cafe");
+        (await a.PostAsJsonAsync("/api/ngan-sach", new { maDanhMuc = cafe, hanMuc = 300_000, thang = 11, nam = 2026 }))
+            .StatusCode.Should().Be(HttpStatusCode.Created);
+
+        (await a.DeleteAsync($"/api/danh-muc/{cafe}?chuyenSang={anUong}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        factory.VoiDb(db =>
+        {
+            var nsB = db.NganSach.AsNoTracking().Single(n => n.MaTaiKhoan == maB);
+            nsB.MaDanhMuc.Should().Be(anUong);
+            nsB.HanMuc.Should().Be(500_000);
+            var nsA = db.NganSach.AsNoTracking().Where(n => n.MaTaiKhoan == maA).ToList();
+            nsA.Should().ContainSingle();
+            nsA[0].MaDanhMuc.Should().Be(anUong);
+            nsA[0].HanMuc.Should().Be(300_000);
+            nsA[0].Thang.Should().Be(11);
             return 0;
         });
     }
