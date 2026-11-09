@@ -6,12 +6,18 @@
 
 - .NET 10 SDK (kiểm tra bằng `dotnet --list-sdks`).
 - SQL Server Express hoặc LocalDB (đi kèm Visual Studio). Chuỗi kết nối mặc định trong `appsettings.json` trỏ tới `(localdb)\MSSQLLocalDB`, cơ sở dữ liệu `QuanLyThuChi`; cần đổi ở `ConnectionStrings:MacDinh` nếu dùng SQL Server Express riêng.
-- Công cụ `dotnet-ef`: `dotnet tool install --global dotnet-ef`.
+- Công cụ `dotnet-ef` (không bắt buộc, chỉ cần khi muốn tự chạy migration): `dotnet tool install --global dotnet-ef`.
 - Chạy test không cần SQL Server vì test dùng SQLite in-memory.
 
 ## Cấu hình
 
-Tạo file `backend/QuanLyThuChi.Api/appsettings.Development.json` từ file mẫu `appsettings.Development.example.json` (file này đã được gitignore, không commit):
+Tạo file `backend/QuanLyThuChi.Api/appsettings.Development.json` từ file mẫu `appsettings.Development.example.json` (file này đã được gitignore, không commit). Trên Windows (PowerShell, từ thư mục gốc của repo):
+
+```powershell
+Copy-Item backend\QuanLyThuChi.Api\appsettings.Development.example.json backend\QuanLyThuChi.Api\appsettings.Development.json
+```
+
+Sau đó mở file vừa tạo và sửa:
 
 ```json
 {
@@ -20,23 +26,47 @@ Tạo file `backend/QuanLyThuChi.Api/appsettings.Development.json` từ file m�
 }
 ```
 
-- `Jwt:Khoa`: khóa ký JWT, bắt buộc và tối thiểu 32 ký tự; thiếu hoặc ngắn hơn thì ứng dụng không khởi động. Khi triển khai thật, đặt qua biến môi trường `Jwt__Khoa`.
+- `Jwt:Khoa`: khóa ký JWT, bắt buộc và tối thiểu 32 ký tự; thiếu hoặc ngắn hơn thì ứng dụng không khởi động. **Bắt buộc thay giá trị mẫu** (`THAY-BANG-CHUOI-NGAU-NHIEN-TOI-THIEU-32-KY-TU`) bằng một chuỗi ngẫu nhiên của riêng bạn: ai biết khóa đều tự ký được token hợp lệ, kể cả token quản trị viên. Khi triển khai thật, đặt qua biến môi trường `Jwt__Khoa`.
 - `Gemini:ApiKey`: khóa Gemini để quét hóa đơn, là bí mật nên chỉ đặt trong file trên hoặc biến môi trường `Gemini__ApiKey`. Thiếu khóa thì ứng dụng vẫn chạy, nhưng quét hóa đơn trả lỗi 400 "Không nhận dạng được hóa đơn".
 - `Gemini:DungBanGia`: đặt `true` để demo offline; hệ thống trả hóa đơn mẫu cố định (Bách Hóa Xanh, 3 dòng) thay vì gọi Gemini.
 - `Gemini:Model`: mặc định trong `appsettings.json`, đổi theo tên model hiện hành nếu cần.
+- `Cors:NguonChoPhep`: danh sách địa chỉ giao diện web được gọi API, ví dụ `["https://quanlythuchi.vn"]`. Để trống (mặc định) thì ở môi trường Development mọi cổng của `localhost`/`127.0.0.1` đều được phép (đủ cho `flutter run -d chrome`); môi trường khác phải khai báo rõ.
 
 ## Tạo cơ sở dữ liệu và chạy
 
 Từ thư mục gốc của repo:
 
 ```bash
-dotnet ef database update --project backend/QuanLyThuChi.Api
 dotnet run --project backend/QuanLyThuChi.Api
 ```
 
-- Swagger UI: mở địa chỉ `https://localhost:<cổng>/swagger` (cổng in ra trong cửa sổ lệnh, xem thêm `Properties/launchSettings.json`).
-- Kiểm tra nhanh: `GET /api/health`.
+- Khi khởi động, ứng dụng **tự áp dụng migration** (tạo hoặc cập nhật cơ sở dữ liệu `QuanLyThuChi`) và nạp dữ liệu khởi tạo, nên không cần chạy lệnh nào khác. Lệnh `dotnet ef database update --project backend/QuanLyThuChi.Api` chỉ dùng khi muốn tạo cơ sở dữ liệu trước mà không chạy ứng dụng.
+- `dotnet run` dùng profile `http` trong `backend/QuanLyThuChi.Api/Properties/launchSettings.json`, chạy tại `http://localhost:5285`.
+- Swagger UI: mở `http://localhost:5285/swagger`. (Profile `https`, chạy bằng `dotnet run --launch-profile https`, dùng thêm `https://localhost:7178`.)
+- Kiểm tra nhanh: `GET http://localhost:5285/api/health`.
 - Để gọi API có khóa trên Swagger: gọi `POST /api/auth/dang-nhap`, sao chép `token` rồi bấm Authorize và dán token.
+
+## Kiểm tra trên SQL Server
+
+Test tự động chạy bằng SQLite, nên cần thử tay một lần trên SQL Server/LocalDB thật trước khi nộp hoặc demo:
+
+1. Chạy `dotnet run --project backend/QuanLyThuChi.Api` trên máy có LocalDB; cửa sổ lệnh không báo lỗi và cơ sở dữ liệu `QuanLyThuChi` xuất hiện trong SQL Server Object Explorer (Visual Studio) hoặc SSMS với server `(localdb)\MSSQLLocalDB`.
+2. Mở `http://localhost:5285/swagger`, gọi `POST /api/auth/dang-nhap` với `{"email": "demo@demo.vn", "matKhau": "Demo@123"}`, nhận được `token`; bấm Authorize và dán token.
+3. Gọi `GET /api/vi` để lấy `maVi` và `GET /api/danh-muc?loai=Chi` để lấy `maDanhMuc` của "Ăn uống".
+4. Gọi `POST /api/giao-dich` kèm hóa đơn, ví dụ:
+
+   ```json
+   {
+     "maVi": 1, "maDanhMuc": 1, "soTien": 45000, "loai": "Chi", "ghiChu": "Thử SQL Server",
+     "hoaDon": {
+       "tenCuaHang": "Circle K", "anhHoaDon": "/uploads/hoa-don/thu.jpg",
+       "chiTiet": [ { "tenMatHang": "Nước suối", "soLuong": 2, "donGia": 10000 },
+                    { "tenMatHang": "Bánh mì", "soLuong": 1, "donGia": 25000 } ]
+     }
+   }
+   ```
+
+   (thay `maVi`, `maDanhMuc` bằng giá trị lấy ở bước 3). Kết quả 201, `coHoaDon` là `true`; `GET /api/giao-dich/{maGiaoDich}` trả lại hóa đơn và 2 dòng chi tiết, số dư ví giảm 45.000.
 
 ## Tài khoản demo
 
