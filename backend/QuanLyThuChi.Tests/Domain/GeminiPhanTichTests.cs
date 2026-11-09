@@ -73,6 +73,31 @@ public class GeminiPhanTichTests
         kq.MatHang.Should().ContainSingle().Which.Ten.Should().Be("C");
     }
 
+    [Theory]
+    [InlineData("1e30")]
+    [InlineData("-75000")]
+    [InlineData("1e17")]
+    public void PhanTich_TongTienQuaLonHoacAm_ThanhNullKhongLoi(string tongTien)
+    {
+        var kq = GeminiDichVuOCR.PhanTich($$"""{"tongTien":{{tongTien}},"matHang":[{"ten":"A","soLuong":1,"donGia":5000}]}""");
+
+        kq.TongTien.Should().BeNull();
+        kq.MatHang.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void PhanTich_DongCoSoQuaLonHoacDonGiaAm_BoDongDo()
+    {
+        var kq = GeminiDichVuOCR.PhanTich("""
+            {"matHang":[{"ten":"A","soLuong":1,"donGia":1e30},{"ten":"B","soLuong":1e30,"donGia":5},
+                        {"ten":"C","soLuong":1,"donGia":-5},{"ten":"D","soLuong":1e9,"donGia":1e9},
+                        {"ten":"E","soLuong":2,"donGia":5}]}
+            """);
+
+        kq.MatHang.Should().ContainSingle().Which.Ten.Should().Be("E");
+        BanNhapHoaDonDto.Tu("/u", kq).TongTien.Should().Be(10m);
+    }
+
     [Fact]
     public void BanNhap_TongTienNull_LayTongDong()
     {

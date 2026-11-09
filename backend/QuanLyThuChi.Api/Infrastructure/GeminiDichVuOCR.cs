@@ -14,6 +14,9 @@ public class GeminiDichVuOCR(HttpClient http, IOptions<GeminiOptions> cauHinh, I
 
     internal const string LoiHeader = "x-goog-api-key";
 
+    /// <summary>Giá trị tiền lớn nhất chấp nhận từ kết quả quét (bằng giới hạn số tiền của giao dịch).</summary>
+    internal const decimal GioiHanSo = 9_999_999_999_999_999m;
+
     private const string Prompt =
         "Đây là ảnh một hóa đơn mua hàng của Việt Nam. Hãy đọc hóa đơn và chỉ trả về JSON đúng theo schema đã cho, " +
         "không thêm lời giải thích. tenCuaHang là tên cửa hàng; ngay là ngày trên hóa đơn theo định dạng yyyy-MM-dd; " +
@@ -53,7 +56,8 @@ public class GeminiDichVuOCR(HttpClient http, IOptions<GeminiOptions> cauHinh, I
         catch (DomainException) { throw; }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException
-                                       or KeyNotFoundException or InvalidOperationException or IndexOutOfRangeException or ArgumentOutOfRangeException)
+                                       or KeyNotFoundException or InvalidOperationException or IndexOutOfRangeException or ArgumentOutOfRangeException
+                                       or OverflowException)
         {
             // Thông điệp lỗi HttpClient không chứa khóa API (khóa nằm trong header, không nằm trong URL).
             logger.LogWarning(ex, "Gọi Gemini thất bại: {LoaiLoi}", ex.GetType().Name);
@@ -122,15 +126,20 @@ public class GeminiDichVuOCR(HttpClient http, IOptions<GeminiOptions> cauHinh, I
                 foreach (var d in dong.OfType<JsonObject>())
                 {
                     var ten = DocChuoi(d["ten"])?.Trim();
-                    var soLuong = DocSo(d["soLuong"]) ?? 1m; // thiếu số lượng thì coi là 1
-                    if (string.IsNullOrEmpty(ten) || soLuong <= 0) continue;
-                    matHang.Add(new MatHangOCR(ten, soLuong, DocSo(d["donGia"]) ?? 0m));
+                    var soLuong = d["soLuong"] is null ? 1m : DocSo(d["soLuong"]); // thiếu số lượng thì coi là 1
+                    var donGia = d["donGia"] is null ? 0m : DocSo(d["donGia"]);
+                    // Bỏ dòng tên rỗng, số không đọc được/ngoài giới hạn, số lượng không dương, đơn giá âm hoặc thành tiền quá lớn.
+                    if (string.IsNullOrEmpty(ten) || soLuong is not { } sl || donGia is not { } dg || sl <= 0 || dg < 0
+                        || (dg > 0 && sl > GioiHanSo / dg)) continue;
+                    matHang.Add(new MatHangOCR(ten, sl, dg));
                 }
             }
 
-            return new KetQuaOCR(DocChuoi(node["tenCuaHang"])?.Trim(), ngay, DocSo(node["tongTien"]), matHang);
+            var tongTien = DocSo(node["tongTien"]);
+            if (tongTien < 0) tongTien = null; // tổng âm coi như không đọc được
+            return new KetQuaOCR(DocChuoi(node["tenCuaHang"])?.Trim(), ngay, tongTien, matHang);
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or OverflowException)
         {
             throw new DomainException(ThongBaoLoi);
         }
@@ -149,12 +158,21 @@ public class GeminiDichVuOCR(HttpClient http, IOptions<GeminiOptions> cauHinh, I
     private static string? DocChuoi(JsonNode? n) =>
         n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
 
+    /// <summary>
+    /// Đọc số từ JSON (số hoặc chuỗi). Giá trị vượt <see cref="GioiHanSo"/> theo trị tuyệt đối (kể cả ngoài phạm vi decimal,
+    /// ví dụ 1e30) coi như không đọc được và trả null, để không ném OverflowException.
+    /// </summary>
     private static decimal? DocSo(JsonNode? n)
     {
         if (n is not JsonValue v) return null;
-        if (v.TryGetValue<decimal>(out var d)) return d;
-        if (v.TryGetValue<double>(out var f)) return (decimal)f;
-        return v.TryGetValue<string>(out var s)
-               && decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var p) ? p : null;
+        decimal? kq = null;
+        if (v.TryGetValue<decimal>(out var d)) kq = d;
+        else if (v.TryGetValue<double>(out var f))
+        {
+            if (double.IsFinite(f) && Math.Abs(f) <= (double)GioiHanSo) kq = (decimal)f;
+        }
+        else if (v.TryGetValue<string>(out var s)
+                 && decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var p)) kq = p;
+        return kq is { } x && Math.Abs(x) <= GioiHanSo ? x : null;
     }
 }
