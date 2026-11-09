@@ -139,27 +139,33 @@ Tiền tố `/api`, JSON, Swagger tại `/swagger`. Mọi route trừ `auth` đ�
 ```
 POST   /auth/dang-ky                          {hoTen, email, matKhau}
 POST   /auth/dang-nhap                        {email, matKhau} → {token, vaiTro, hoTen}
-GET    /tai-khoan/toi            PUT /tai-khoan/toi            PUT /tai-khoan/mat-khau
-GET    /vi                       POST /vi       PUT /vi/{id}   DELETE /vi/{id}
-GET    /danh-muc?loai            POST /danh-muc PUT /danh-muc/{id}
+GET    /tai-khoan/toi            PUT /tai-khoan/toi {hoTen}    PUT /tai-khoan/mat-khau {matKhauCu, matKhauMoi}
+GET    /vi                       POST /vi {tenVi, loaiVi, soDuBanDau}   PUT /vi/{id} {tenVi, loaiVi}   DELETE /vi/{id}
+GET    /danh-muc?loai            POST /danh-muc {tenDanhMuc, loai, bieuTuong?, mauSac?}
+PUT    /danh-muc/{id} {tenDanhMuc, bieuTuong?, mauSac?}
 DELETE /danh-muc/{id}?chuyenSang={id}
-GET    /giao-dich?tu&den&loai&viId&danhMucId&q&trang
-POST   /giao-dich   (kèm khối hoaDon tùy chọn)   PUT /giao-dich/{id}   DELETE /giao-dich/{id}
+GET    /giao-dich?tu&den&loai&viId&danhMucId&q&trang      GET /giao-dich/{id}   (chi tiết, kèm hóa đơn)
+POST   /giao-dich   {maVi, maDanhMuc, soTien, loai, ngayGiaoDich?, ghiChu?, hoaDon?}
+                    hoaDon = {tenCuaHang?, ngayHoaDon?, anhHoaDon, chiTiet[{tenMatHang, soLuong, donGia}]}
+PUT    /giao-dich/{id}   {maVi, maDanhMuc, soTien, loai, ngayGiaoDich?, ghiChu?}   DELETE /giao-dich/{id}
 POST   /hoa-don/quet            multipart ảnh → bản nháp {anhUrl, tenCuaHang, ngay, tongTien, matHang[]}
-GET    /ngan-sach?thang&nam      POST /ngan-sach  PUT /ngan-sach/{id}  DELETE /ngan-sach/{id}
-GET    /muc-tieu                 POST /muc-tieu   PUT /muc-tieu/{id}   DELETE /muc-tieu/{id}
-POST   /muc-tieu/{id}/nap-tien   {viId, soTien}
+GET    /ngan-sach?thang&nam      POST /ngan-sach {maDanhMuc, hanMuc, thang, nam, nguongCanhBao?}
+PUT    /ngan-sach/{id} {hanMuc, nguongCanhBao?}   DELETE /ngan-sach/{id}
+GET    /muc-tieu                 POST /muc-tieu {tenMucTieu, soTienMucTieu, hanChot}
+PUT    /muc-tieu/{id} {tenMucTieu, soTienMucTieu, hanChot}   DELETE /muc-tieu/{id}
+POST   /muc-tieu/{id}/nap-tien   {maVi, soTien}
 GET    /bao-cao/tong-quan?thang&nam
-GET    /bao-cao/theo-danh-muc?tu&den&loai
+GET    /bao-cao/theo-danh-muc?tu&den&loai     (tu, den bắt buộc)
 GET    /bao-cao/theo-thoi-gian?nam
 GET    /bao-cao/thang
-GET    /bao-cao/excel?tu&den     → file .xlsx
-GET    /thong-bao                GET /thong-bao/so-chua-doc
-PUT    /thong-bao/{id}/da-doc    DELETE /thong-bao/{id}
-GET    /thong-bao/cai-dat        PUT /thong-bao/cai-dat
+GET    /bao-cao/excel?tu&den     → file .xlsx (tu, den bắt buộc)
+GET    /thong-bao?chuaDoc        GET /thong-bao/so-chua-doc
+PUT    /thong-bao/{id}/da-doc    PUT /thong-bao/da-doc-tat-ca   DELETE /thong-bao/{id}
+GET    /thong-bao/cai-dat        PUT /thong-bao/cai-dat {nhacHangNgay, gioNhac, nhacNganSach, nhacMucTieu}
+POST   /thong-bao/cai-dat/khoi-phuc           (về cài đặt mặc định)
 GET    /admin/nguoi-dung?q       PUT /admin/nguoi-dung/{id}/khoa {lyDo}
 PUT    /admin/nguoi-dung/{id}/mo-khoa
-GET/POST/PUT/DELETE /admin/danh-muc-mac-dinh[/{id}]
+GET/POST/PUT/DELETE /admin/danh-muc-mac-dinh[/{id}]   (thân như /danh-muc)
 GET    /admin/thong-ke
 POST   /admin/chay-tong-ket?thang&nam        (chạy tổng kết thủ công để demo)
 ```
