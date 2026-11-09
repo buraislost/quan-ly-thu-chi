@@ -232,4 +232,34 @@ public class BaoCaoApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
+
+    [Theory]
+    [InlineData("/api/bao-cao/theo-danh-muc?tu=2026-11-01&den=9999-12-31")]
+    [InlineData("/api/bao-cao/excel?tu=2026-11-01&den=9999-12-31")]
+    public async Task DenLaNgayToiDa_400(string url)
+    {
+        var client = await factory.TaoClientDaDangNhap(EmailMoi());
+
+        var r = await client.GetAsync(url);
+
+        r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await r.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("message").GetString()
+            .Should().Be("Khoảng thời gian không hợp lệ");
+    }
+
+    [Theory]
+    [InlineData("/api/bao-cao/theo-danh-muc")]
+    [InlineData("/api/bao-cao/theo-danh-muc?tu=2026-11-01")]
+    [InlineData("/api/bao-cao/excel")]
+    [InlineData("/api/bao-cao/excel?den=2026-11-30")]
+    public async Task ThieuTuHoacDen_400(string url)
+    {
+        var client = await factory.TaoClientDaDangNhap(EmailMoi());
+
+        var r = await client.GetAsync(url);
+
+        r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await r.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("message").GetString()
+            .Should().Be("Vui lòng chọn khoảng thời gian");
+    }
 }

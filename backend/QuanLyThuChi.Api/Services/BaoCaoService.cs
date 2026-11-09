@@ -10,6 +10,8 @@ namespace QuanLyThuChi.Services;
 public class BaoCaoService(AppDbContext db, IDongHo dongHo, NganSachService nganSach, ThongBaoService thongBao,
     ILogger<BaoCaoService> logger)
 {
+    public const string LoiThieuKhoang = "Vui lòng chọn khoảng thời gian";
+
     private const int SoGiaoDichGanDay = 5;
     private const double NguongSapVuot = 80;
     private static readonly CultureInfo ViVN = CultureInfo.GetCultureInfo("vi-VN");
@@ -150,7 +152,8 @@ public class BaoCaoService(AppDbContext db, IDongHo dongHo, NganSachService ngan
 
     private static void KiemTraKhoang(DateOnly tu, DateOnly den)
     {
-        if (tu > den) throw new DomainException(GiaoDichService.LoiKhoangThoiGian);
+        // den = DateOnly.MaxValue thì không cộng được 1 ngày khi lọc (ArgumentOutOfRange), nên từ chối luôn.
+        if (tu > den || den == DateOnly.MaxValue) throw new DomainException(GiaoDichService.LoiKhoangThoiGian);
     }
 
     /// <summary>Giao dịch trong [tu, den] gồm cả hai đầu, mới nhất trước, kèm ví và danh mục.</summary>

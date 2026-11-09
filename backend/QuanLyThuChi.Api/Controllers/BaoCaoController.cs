@@ -20,9 +20,12 @@ public class BaoCaoController(BaoCaoService dich) : ControllerBase
 
     [HttpGet("theo-danh-muc")]
     public async Task<ActionResult<List<TheoDanhMucDto>>> TheoDanhMuc(
-        [FromQuery] DateOnly tu, [FromQuery] DateOnly den, [FromQuery] LoaiGiaoDich loai = LoaiGiaoDich.Chi,
-        CancellationToken ct = default) =>
-        await dich.TheoDanhMucAsync(User.MaTaiKhoan(), tu, den, loai, ct);
+        [FromQuery] DateOnly? tu, [FromQuery] DateOnly? den, [FromQuery] LoaiGiaoDich loai = LoaiGiaoDich.Chi,
+        CancellationToken ct = default)
+    {
+        var (dau, cuoi) = BatBuocKhoang(tu, den);
+        return await dich.TheoDanhMucAsync(User.MaTaiKhoan(), dau, cuoi, loai, ct);
+    }
 
     [HttpGet("theo-thoi-gian")]
     public async Task<ActionResult<List<TheoThangDto>>> TheoThoiGian([FromQuery] int? nam, CancellationToken ct) =>
@@ -33,11 +36,16 @@ public class BaoCaoController(BaoCaoService dich) : ControllerBase
         await dich.LietKeBaoCaoAsync(User.MaTaiKhoan(), ct);
 
     [HttpGet("excel")]
-    public async Task<IActionResult> Excel([FromQuery] DateOnly tu, [FromQuery] DateOnly den, CancellationToken ct)
+    public async Task<IActionResult> Excel([FromQuery] DateOnly? tu, [FromQuery] DateOnly? den, CancellationToken ct)
     {
+        var (dau, cuoi) = BatBuocKhoang(tu, den);
         var maTk = User.MaTaiKhoan();
-        var giaoDich = await dich.LayGiaoDichDtoAsync(maTk, tu, den, ct);
-        var tongQuan = await dich.TongQuanKhoangAsync(maTk, tu, den, ct);
-        return File(ExcelXuatBaoCao.Tao(giaoDich, tongQuan), LoaiTepExcel, $"bao-cao-{tu:yyyyMMdd}-{den:yyyyMMdd}.xlsx");
+        var giaoDich = await dich.LayGiaoDichDtoAsync(maTk, dau, cuoi, ct);
+        var tongQuan = await dich.TongQuanKhoangAsync(maTk, dau, cuoi, ct);
+        return File(ExcelXuatBaoCao.Tao(giaoDich, tongQuan), LoaiTepExcel, $"bao-cao-{dau:yyyyMMdd}-{cuoi:yyyyMMdd}.xlsx");
     }
+
+    /// <summary>Báo cáo theo khoảng ngày bắt buộc có cả từ ngày và đến ngày.</summary>
+    private static (DateOnly Tu, DateOnly Den) BatBuocKhoang(DateOnly? tu, DateOnly? den) =>
+        tu is { } t && den is { } d ? (t, d) : throw new DomainException(BaoCaoService.LoiThieuKhoang);
 }
