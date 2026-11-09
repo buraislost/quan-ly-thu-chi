@@ -306,6 +306,46 @@ public class GiaoDichApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         ct.GetProperty("hoaDon").GetProperty("tongTien").GetDecimal().Should().Be(45_000);
     }
 
+    [Theory]
+    [InlineData(201, 10)]
+    [InlineData(10, 201)]
+    public async Task ThemKemHoaDon_TenQuaDai_400VaKhongLuu(int doDaiCuaHang, int doDaiMatHang)
+    {
+        var (c, tk, vi) = await NguoiDung();
+        var truoc = DemGiaoDich(tk);
+        var hoaDon = new
+        {
+            tenCuaHang = new string('a', doDaiCuaHang), anhHoaDon = "/uploads/hd.jpg",
+            chiTiet = new[] { new { tenMatHang = new string('b', doDaiMatHang), soLuong = 1m, donGia = 10_000m } },
+        };
+
+        var r = await Gui(c, vi, MaDm("Ăn uống", LoaiGiaoDich.Chi), 10_000, LoaiGiaoDich.Chi, Ngay, null, hoaDon);
+
+        r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var loi = (await r.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
+        loi.EnumerateObject().Select(e => e.Name).Should().ContainSingle()
+            .Which.Should().Be(doDaiCuaHang > 200 ? "hoaDon.tenCuaHang" : "hoaDon.chiTiet[0].tenMatHang");
+        DemGiaoDich(tk).Should().Be(truoc);
+    }
+
+    [Fact]
+    public async Task ThemKemHoaDon_NgayHoaDonCoMuiGio_ChuanHoaGioVietNam()
+    {
+        var (c, _, vi) = await NguoiDung();
+        var hoaDon = new
+        {
+            ngayHoaDon = "2026-10-31T17:30:00Z", anhHoaDon = "/uploads/hd.jpg",
+            chiTiet = new[] { new { tenMatHang = "Cà phê", soLuong = 1m, donGia = 30_000m } },
+        };
+
+        var r = await Gui(c, vi, MaDm("Ăn uống", LoaiGiaoDich.Chi), 30_000, LoaiGiaoDich.Chi, Ngay, null, hoaDon);
+
+        r.StatusCode.Should().Be(HttpStatusCode.Created);
+        var ma = (await r.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("maGiaoDich").GetInt32();
+        factory.VoiDb(db => db.HoaDon.AsNoTracking().Single(h => h.MaGiaoDich == ma).NgayHoaDon)
+            .Should().Be(new DateTime(2026, 11, 1, 0, 30, 0));
+    }
+
     [Fact]
     public async Task ThemKemHoaDon_GiaoDichThu_400()
     {
@@ -378,6 +418,19 @@ public class GiaoDichApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var (c, _, _) = await NguoiDung(0);
 
         var r = await c.GetAsync("/api/giao-dich?tu=2026-11-10&den=2026-11-01");
+
+        r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Message(r)).Should().Be("Khoảng thời gian không hợp lệ");
+    }
+
+    [Theory]
+    [InlineData("/api/giao-dich?den=9999-12-31")]
+    [InlineData("/api/giao-dich?tu=2026-11-01&den=9999-12-31")]
+    public async Task TimKiem_DenLaNgayToiDa_400(string url)
+    {
+        var (c, _, _) = await NguoiDung(0);
+
+        var r = await c.GetAsync(url);
 
         r.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await Message(r)).Should().Be("Khoảng thời gian không hợp lệ");

@@ -78,7 +78,7 @@ public class GiaoDichService(AppDbContext db, IDongHo dongHo, ViService viServic
     public async Task<TrangKetQua<GiaoDichDto>> TimKiemAsync(int maTk, DateOnly? tu, DateOnly? den, LoaiGiaoDich? loai,
         int? maVi, int? maDanhMuc, string? q, int trang, CancellationToken ct = default)
     {
-        if (tu is { } t && den is { } d && t > d) throw new DomainException(LoiKhoangThoiGian);
+        if ((tu is { } t && den is { } d && t > d) || den == DateOnly.MaxValue) throw new DomainException(LoiKhoangThoiGian);
         if (trang <= 0) trang = 1;
 
         var truyVan = db.GiaoDich.AsNoTracking().Where(g => g.MaTaiKhoan == maTk);
@@ -118,7 +118,7 @@ public class GiaoDichService(AppDbContext db, IDongHo dongHo, ViService viServic
 
     private HoaDon TaoHoaDon(HoaDonRequest r, DateTime ngayGiaoDich)
     {
-        var hd = new HoaDon(r.TenCuaHang, r.NgayHoaDon ?? ngayGiaoDich, r.AnhHoaDon);
+        var hd = new HoaDon(r.TenCuaHang, r.NgayHoaDon is { } ngay ? dongHo.SangGioVietNam(ngay) : ngayGiaoDich, r.AnhHoaDon);
         foreach (var c in r.ChiTiet) hd.ThemChiTiet(new ChiTietHoaDon(c.TenMatHang, c.SoLuong, c.DonGia));
         return hd;
     }

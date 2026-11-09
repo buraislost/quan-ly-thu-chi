@@ -4,12 +4,13 @@ using QuanLyThuChi.Domain;
 namespace QuanLyThuChi.Dtos;
 
 public record ChiTietRequest(
-    [Required(ErrorMessage = "Tên mặt hàng không được để trống")] string TenMatHang,
+    [Required(ErrorMessage = "Tên mặt hàng không được để trống")]
+    [StringLength(200, ErrorMessage = "Tên mặt hàng tối đa 200 ký tự")] string TenMatHang,
     decimal SoLuong,
     decimal DonGia);
 
 public record HoaDonRequest(
-    string? TenCuaHang,
+    [StringLength(200, ErrorMessage = "Tên cửa hàng tối đa 200 ký tự")] string? TenCuaHang,
     DateTime? NgayHoaDon,
     [Required(ErrorMessage = "Vui lòng đính kèm ảnh hóa đơn")]
     [StringLength(500, ErrorMessage = "Đường dẫn ảnh hóa đơn quá dài")] string AnhHoaDon,
