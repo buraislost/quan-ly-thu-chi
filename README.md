@@ -114,7 +114,11 @@ backend/
   QuanLyThuChi.Tests/  Test domain và test API (SQLite in-memory)
 docs/
   thiet-ke/          Tài liệu thiết kế và kế hoạch
-  staruml/           Mô hình StarUML (.mdj) và ảnh sơ đồ lớp
+  staruml/           Mô hình StarUML (.mdj) và ảnh PNG các sơ đồ:
+                       QuanLyThuChi.mdj  – use case, sơ đồ lớp
+                       SoDoQuanHe.mdj    – sơ đồ quan hệ cơ sở dữ liệu
+                       SoDoTuanTu.mdj    – 6 sơ đồ tuần tự
+                       SoDoTrangThai.mdj – 4 sơ đồ trạng thái
   demo/              Ảnh hóa đơn mẫu để demo quét hóa đơn
 ```
 
